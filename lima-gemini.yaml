@@ -13,13 +13,13 @@ user:
   name: "${VM_USER}"
 
 mounts:
-- location: "${PATH_REPOSITORY}"
-  writable: true
-  mountPoint: "/tmp/repository"
-- location: "${PATH_LIMA_CONFIG}"
-  mountPoint: "/tmp/lima-config"
+- location: "${PATH_LIMA_SSH}"
+  mountPoint: "/tmp/ssh"
   writable: false
-- location: "${PATH_LIMA_CONFIG}/.gemini"
+- location: "${PATH_REPOSITORY}"
+  mountPoint: "/tmp/repository"
+  writable: true
+- location: "${PATH_LIMA_GEMINI}/"
   mountPoint: "/home/${VM_USER}.linux/.gemini"
   writable: true
 
@@ -64,8 +64,8 @@ provision:
     mkdir -p ~/.ssh
     chmod 700 ~/.ssh
     
-    if [ -f "/tmp/lima-config/.ssh/key.pub" ]; then
-      cat "/tmp/lima-config/.ssh/key.pub" >> ~/.ssh/authorized_keys
+    if [ -f "/tmp/ssh/key.pub" ]; then
+      cat "/tmp/ssh/key.pub" >> ~/.ssh/authorized_keys
       chmod 600 ~/.ssh/authorized_keys
     else
       echo "Error: SSH key not found" >&2
@@ -74,7 +74,7 @@ provision:
 
     echo "export GOOGLE_CLOUD_PROJECT=${GCP_PROJECT_ID}" >> ~/.profile
     echo "alias cdr='cd /tmp/repository/'" >> ~/.profile
-    echo "export GEMINI_SYSTEM_MD='${PATH_LIMA_CONFIG}/ai-system-instructions/system-instructions.md'" >> ~/.profile
+    echo "export GEMINI_SYSTEM_MD='~/.gemini/system-instructions.md'" >> ~/.profile
 
     # 3. Mark user init as complete
     touch ~/.lima_user_init_done
