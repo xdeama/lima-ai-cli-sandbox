@@ -3,5 +3,6 @@
 test.yaml
 .gemini/
 .claude/
+.claude*/
 .claude.json
 *.REJECTED.yaml

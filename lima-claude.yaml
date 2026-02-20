@@ -41,9 +41,11 @@ provision:
     apt-get install -y curl
     apt-get install -y nodejs
     apt-get install -y openjdk-21-jdk
+    
+    # Docker for MCP servers
     apt-get install -y docker.io
-
-    sudo usermod -aG docker $USER
+    groupadd -f docker
+    usermod -aG docker {{.User}}
 
     npm install -g @anthropic-ai/claude-code
 
