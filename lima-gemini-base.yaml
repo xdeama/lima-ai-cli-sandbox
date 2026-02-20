@@ -1,5 +1,6 @@
 # lima vm configuration
 # ubuntu vm with gemini cli, repository and ssh access
+# base template - add project-specific tooling on top of this
 vmType: "vz"
 arch: "aarch64"
 
@@ -35,25 +36,15 @@ provision:
       exit 0
     fi
 
-    # 2. System Setup: Packages, Sudoers, and Init Password
+    # 2. System Setup: Packages and Gemini CLI
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get update
     apt-get install -y git
     apt-get install -y curl
-    apt-get install -y nodejs 
-    apt-get install -y openjdk-21-jdk
+    apt-get install -y nodejs
     apt-get install -y docker.io
-    
-    npm install -g @google/gemini-cli
- 
-    # TODO: uncomment to reenable sudo pssword
-    # cat <<EOF > /etc/sudoers.d/90-lima-user
-    # ${VM_USER} ALL=(ALL) PASSWD: ALL
-    # ${VM_USER} ALL=(ALL) NOPASSWD: /usr/bin/cat /mnt/lima-cidata/param.env, /usr/bin/diff -q /run/lima-boot-done /mnt/lima-cidata/meta-data
-    # EOF
-    # chmod 440 /etc/sudoers.d/90-lima-user
 
-    # echo "${VM_USER}:${VM_INIT_PASS}" | chpasswd
+    npm install -g @google/gemini-cli
 
     # 3. Mark system init as complete
     touch /etc/.lima_system_init_done
@@ -69,7 +60,7 @@ provision:
     # Using ~ instead of $HOME makes it invisible to Mac's envsubst
     mkdir -p ~/.ssh
     chmod 700 ~/.ssh
-    
+
     if [ -f "/tmp/ssh/key.pub" ]; then
       cat "/tmp/ssh/key.pub" >> ~/.ssh/authorized_keys
       chmod 600 ~/.ssh/authorized_keys
@@ -77,11 +68,6 @@ provision:
       echo "Error: SSH key not found" >&2
       exit 1
     fi
-
-    echo "export GOOGLE_CLOUD_PROJECT=${GCP_PROJECT_ID}" >> ~/.profile
-    echo "export GEMINI_SYSTEM_MD='~/.gemini/system-instructions.md'" >> ~/.profile
-    echo "alias cdr='cd /mnt/repository/neoPDC'" >> ~/.profile
-    echo "alias gradle='[ -f ./gradlew ] && ./gradlew || command gradle'" >> ~/.profile
 
     # 3. Mark user init as complete
     touch ~/.lima_user_init_done

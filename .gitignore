@@ -1,4 +1,7 @@
 .env
 /.ssh
 test.yaml
-/.gemini
+.gemini/
+.claude/
+.claude.json
+*.REJECTED.yaml
