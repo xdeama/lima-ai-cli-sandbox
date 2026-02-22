@@ -1,16 +1,12 @@
 # lima vm configuration
 vmType: "vz"
 arch: "aarch64"
-
 images:
 - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
-
 cpus: 2
 memory: "8GiB"
-
 user:
   name: "${VM_USER}"
-
 mounts:
 - location: "${PATH_LIMA_SSH}"
   mountPoint: "/tmp/ssh"
@@ -21,77 +17,93 @@ mounts:
 - location: "${PATH_LIMA_CLAUDE}/"
   mountPoint: "/home/${VM_USER}.linux/.claude"
   writable: true
-
+- location: "${PATH_LIMA_GEMINI}/"
+  mountPoint: "/home/${VM_USER}.linux/.gemini"
+  writable: true
 ssh:
   localPort: ${VM_SSH_PORT}
   loadDotSSHPubKeys: false
-
 provision:
+# --- System Setup: Update Linux ---
 - mode: system
   script: |
-    # 1. System Check: Exit immediately if already initialized
     if [ -f "/etc/.lima_system_init_done" ]; then
       exit 0
     fi
 
-    # 2. System Setup: Packages and Claude Code
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get update
-    apt-get install -y git
-    apt-get install -y curl
+
+    touch /etc/.lima_system_init_done
+
+# --- Dev Tools Installation ---
+- mode: system
+  script: |
+    if [ -f "/etc/.lima_devtools_init_done" ]; then
+      exit 0
+    fi
+
+    # NodeJS
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
-    apt-get install -y openjdk-21-jdk
-    
+
+    # AI CLI Tools
+    npm install -g @anthropic-ai/claude-code
+    npm install -g @google/gemini-cli
+
+    # Java
+    apt-get install -y git curl openjdk-21-jdk
+
     # Docker for MCP servers
     apt-get install -y docker.io
     groupadd -f docker
     usermod -aG docker {{.User}}
 
-    npm install -g @anthropic-ai/claude-code
+    touch /etc/.lima_devtools_init_done
 
-    # TODO: uncomment to reenable sudo password
-    # cat <<EOF > /etc/sudoers.d/90-lima-user
-    # ${VM_USER} ALL=(ALL) PASSWD: ALL
-    # ${VM_USER} ALL=(ALL) NOPASSWD: /usr/bin/cat /mnt/lima-cidata/param.env, /usr/bin/diff -q /run/lima-boot-done /mnt/lima-cidata/meta-data
-    # EOF
-    # chmod 440 /etc/sudoers.d/90-lima-user
+# --- Security Hardening: Sudo password (must run after all other system blocks) ---
+- mode: system
+  script: |
+    if [ -f "/etc/.lima_sudo_init_done" ]; then
+      exit 0
+    fi
 
-    # echo "${VM_USER}:${VM_INIT_PASS}" | chpasswd
+    cat <<EOF > /etc/sudoers.d/90-lima-user
+    ${VM_USER} ALL=(ALL) PASSWD: ALL
+    ${VM_USER} ALL=(ALL) NOPASSWD: /usr/bin/cat /mnt/lima-cidata/param.env, /usr/bin/diff -q /run/lima-boot-done /mnt/lima-cidata/meta-data
+    EOF
+    chmod 440 /etc/sudoers.d/90-lima-user
+    echo "${VM_USER}:${VM_INIT_PASS}" | chpasswd
 
-    # 3. Mark system init as complete
-    touch /etc/.lima_system_init_done
+    touch /etc/.lima_sudo_init_done
 
+# --- User Setup: SSH keys, profile, and symlinks ---
 - mode: user
   script: |
     # Always run: symlink .claude.json from inside the persistent mount
     # On host, store the file as $PATH_LIMA_CLAUDE/.claude.json
     ln -sfn ~/.claude/.claude.json ~/.claude.json
 
-    # 1. User Check: Exit immediately if already initialized
     if [ -f "~/.lima_user_init_done" ]; then
       exit 0
     fi
 
-    # 2. User Setup: SSH Keys and Profile
     # Using ~ instead of $HOME to avoid replacement by envsubst, which is used to substitute the variables from .env
     mkdir -p ~/.ssh
     chmod 700 ~/.ssh
-
     if [ -f "/tmp/ssh/key.pub" ]; then
       cat "/tmp/ssh/key.pub" >> ~/.ssh/authorized_keys
       chmod 600 ~/.ssh/authorized_keys
     else
       echo "Error: SSH key not found" >&2
-      exit 1
+      exit 1x 
     fi
 
     echo "export SONARQUBE_TOKEN=${SONARQUBE_TOKEN}" >> ~/.profile
     echo "export SONARQUBE_URL=${SONARQUBE_URL}" >> ~/.profile
     echo "alias cdr='cd /mnt/repository'" >> ~/.profile
+    echo "export GOOGLE_CLOUD_PROJECT=${GCP_PROJECT_ID}" >> ~/.profile
 
-    # 3. Mark user init as complete
     touch ~/.lima_user_init_done
-
 hostResolver:
   hosts:
     host.docker.internal: host.lima.internal

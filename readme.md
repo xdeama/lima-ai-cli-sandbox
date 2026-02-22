@@ -142,7 +142,7 @@ limactl start <VM_NAME>
 limactl stop <VM_NAME>
 ```
 
-**Delete the VM** (destroys the virtual disk, mounts on your Mac are untouched):
+**Delete the VM** (delete the vm and it's virutal storage, also deletes the ssh fingerprint from four ssh config):
 ```bash
 ./delete.sh <VM_NAME>
 ```
@@ -212,16 +212,6 @@ npm install -g @google/gemini-cli
 **Remove cached Lima base images** (frees disk space, images are re-downloaded on next VM creation):
 ```bash
 limactl prune
-```
-
-Or manually:
-```bash
-rm -rf ~/.cache/lima/download/
-```
-
-**Delete everything** (all VMs, cached images, Lima state):
-```bash
-rm -rf ~/.lima/
 ```
 
 ---
