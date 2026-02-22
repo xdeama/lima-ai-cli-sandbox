@@ -33,6 +33,7 @@ fi
 # We use <() process substitution to pass the 'baked' YAML as a file
 if limactl list | grep -q "^${TARGET_NAME} "; then
     echo "Instance '${TARGET_NAME}' exists. Starting..."
+    ssh-keygen -R "[localhost]:${VM_SSH_PORT}"
     limactl start "${TARGET_NAME}"
 else
     echo "Creating instance '${TARGET_NAME}' from ${YAML_TEMPLATE}..."

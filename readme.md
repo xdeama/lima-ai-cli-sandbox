@@ -124,7 +124,7 @@ Then set `PATH_LIMA_GEMINI` in `.env` to the absolute path of that `.gemini` fol
 
 **Step 4 — Create the VM:**
 ```bash
-./create.sh lima-claude-base.yaml
+./start.sh lima-claude-base.yaml
 ```
 First boot takes a few minutes while packages are installed. Subsequent boots take seconds.
 
@@ -136,6 +136,7 @@ First boot takes a few minutes while packages are installed. Subsequent boots ta
 ```bash
 limactl start <VM_NAME>
 ```
+Every vm start creates a new vm instance, with a new ssh fingerprint.
 
 **Stop the VM:**
 ```bash

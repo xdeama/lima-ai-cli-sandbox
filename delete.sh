@@ -13,4 +13,13 @@ if [ -f .env ]; then
     set +a
 fi
 
-limactl stop "$VM_NAME" && limactl delete "$VM_NAME" && ssh-keygen -R "[localhost]:${VM_SSH_PORT}"
+echo "Stopping $VM_NAME."
+limactl stop "$VM_NAME" 
+
+echo "Deleting $VM_NAME."
+limactl delete "$VM_NAME"
+
+echo "Deleting [localhost]:${VM_SSH_PORT} from trusted ssh servers."
+ssh-keygen -R "[localhost]:${VM_SSH_PORT}"
+
+echo "Fully removed $VM_NAME."
