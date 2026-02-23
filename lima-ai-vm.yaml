@@ -58,6 +58,11 @@ provision:
     groupadd -f docker
     usermod -aG docker {{.User}}
 
+    docker run -i --rm -e SONARQUBE_TOKEN -e SONARQUBE_URL mcp/sonarqube
+
+    # ShellCheck
+    sudo apt-get install shellcheck
+
     touch /etc/.lima_devtools_init_done
 
 # --- Security Hardening: Sudo password (must run after all other system blocks) ---

@@ -29,6 +29,21 @@ Start with a base template and copy in the project-specific tools you need.
 
 ---
 
+## Rough Edges
+Lima is Open Source, totally awesome, super performant on arm64 and in some regards a rough choice for this scenario of application.
+For starts, every start and stop creates a new vm with a persistent volume. Your SSH fingerprint reports this is not the right
+server at every restart.
+
+The setup script as code is awesome. But time-intensive to debug. And its running at every stop and start, since stop and start
+are delete and re-create but without deleting its volume.
+
+If you want to treat your AI CLI tools VM as a stateful and stable VM that you evolve by customizing the linux installation manually,
+this is a tough choice. If you treat your Linux VM like a stateless "container", Lima performs well for you.
+
+To deal with the "provision on every startup" issue, my provisioning scripts save markers on finish and skip if the markers are present. 
+
+---
+
 ## How State Works
 
 Understanding this will save you a lot of confusion.
