@@ -20,6 +20,13 @@ mounts:
 - location: "${PATH_LIMA_GEMINI}/"
   mountPoint: "/home/${VM_USER}.linux/.gemini"
   writable: true
+- location: "${PATH_SKILLS}/"
+  mountPoint: "/home/${VM_USER}.linux/.claude/skills"
+  writable: true
+- location: "${PATH_SKILLS}/"
+  mountPoint: "/home/${VM_USER}.linux/.gemini/skills"
+  writable: true
+
 ssh:
   localPort: ${VM_SSH_PORT}
   loadDotSSHPubKeys: false
@@ -41,27 +48,32 @@ provision:
     if [ -f "/etc/.lima_devtools_init_done" ]; then
       exit 0
     fi
+    
+    # Build essentials
+    apt-get install -y build-essential
+    
+    # PDF tools
+    sudo apt-get install -y poppler-utils
+    sudo apt-get install -y python3-pip
 
-    # NodeJS
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    # Install AI Tools
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
     apt-get install -y nodejs
-
-    # AI CLI Tools
-    npm install -g @anthropic-ai/claude-code
     npm install -g @google/gemini-cli
+    npm install -g @anthropic-ai/claude-code
+    npm i -g opencode-ai
+    # curl -fsSL https://opencode.ai/install | bash
 
     # Java
     apt-get install -y git curl openjdk-21-jdk
+    
+    # Helm
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
     # Docker for MCP servers
     apt-get install -y docker.io
     groupadd -f docker
-    usermod -aG docker {{.User}}
-
-    docker run -i --rm -e SONARQUBE_TOKEN -e SONARQUBE_URL mcp/sonarqube
-
-    # ShellCheck
-    sudo apt-get install shellcheck
+    usermod -aG docker ${VM_USER}
 
     touch /etc/.lima_devtools_init_done
 
@@ -103,12 +115,18 @@ provision:
       exit 1x 
     fi
 
-    echo "export SONARQUBE_TOKEN=${SONARQUBE_TOKEN}" >> ~/.profile
-    echo "export SONARQUBE_URL=${SONARQUBE_URL}" >> ~/.profile
+    # Claude Code
+    # curl -fsSL https://claude.ai/install.sh | bash -s stable
+    # echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+
+    # MCP and Credentials
     echo "alias cdr='cd /mnt/repository'" >> ~/.profile
+    echo "alias cdw='cd /mnt/repository/git.denktmit.tech/wams'" >> ~/.profile
     echo "export GOOGLE_CLOUD_PROJECT=${GCP_PROJECT_ID}" >> ~/.profile
+    echo "alias limalog='less /var/log/cloud-init-output.log'" >> ~/.profile
 
     touch ~/.lima_user_init_done
+
 hostResolver:
   hosts:
     host.docker.internal: host.lima.internal

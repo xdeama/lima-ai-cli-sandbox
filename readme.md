@@ -66,7 +66,7 @@ The VM gets read/write access to exactly three folders on your Mac — nothing m
 **Read-only.** A folder on your Mac containing a file named `key.pub`. The provisioning script reads this public key on first boot and adds it to the VM's `authorized_keys`, so you can SSH in.
 
 You need to create this folder and copy your public key into it:
-```bash
+```bash 
 mkdir -p /your/chosen/path/.ssh
 cp ~/.ssh/id_ed25519.pub /your/chosen/path/.ssh/key.pub
 ```
@@ -90,7 +90,7 @@ PATH_REPOSITORY=/Users/<vm-username>/path/to/your/project
 
 ## Prerequisites
 
-- macOS with [Lima installed](https://github.com/lima-vm/lima#installation): `brew install lima`
+- macOS with [Lima v2.0.x installed](https://github.com/lima-vm/lima#installation): `brew install lima`
 - An SSH key pair on your Mac (e.g., `~/.ssh/id_ed25519` + `id_ed25519.pub`)
 - A Claude Code or Gemini CLI account with an existing `~/.claude.json` or `~/.gemini` config on your Mac (i.e., you have already authenticated the CLI locally at least once)
 
@@ -251,7 +251,7 @@ less "$HOME/.lima/<VM_NAME>/serialv.log"
 
 **Tools missing or config wrong after SSH?** Check the cloud-init provisioning log inside the VM:
 ```bash
-sudo tail -n 50 /var/log/cloud-init-output.log
+sudo tail -n 100 /var/log/cloud-init-output.log
 ```
 
 **Mount looks wrong?** Check what is actually mounted:
@@ -261,3 +261,12 @@ df -h ~/.claude
 df -h ~/.gemini
 ```
 If the output shows the Mac root filesystem, `PATH_LIMA_CLAUDE` / `PATH_LIMA_GEMINI` in `.env` is unset or points to the wrong path.
+
+
+# docker linux user permission hotfix
+If `docker ps` is denied, can give your user docker group permissions for the current session by:
+```bash
+newgrp docker
+```
+
+Hint: `limactl shell <vmname>` does not open a new shell session, and the session you get may not have the permissions configured in your setup script.
